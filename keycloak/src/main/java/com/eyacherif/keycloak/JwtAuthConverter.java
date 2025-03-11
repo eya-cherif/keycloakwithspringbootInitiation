@@ -3,12 +3,13 @@ package com.eyacherif.keycloak;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collector;
+
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtClaimNames;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
@@ -24,8 +25,11 @@ public class JwtAuthConverter implements Converter <Jwt , AbstractAuthentication
 
 
     private final JwtGrantedAuthoritiesConverter jwtGrantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter(); 
-    private final String princileAttribut = "preferred_username"; 
-    
+    @Value("${jwt.auth.converter.principle-attribute}")
+    private  String principalAttribute  ;
+    @Value("${jwt.auth.converter.resource-id}")
+    private String resourceId ;
+
     @Override 
     public AbstractAuthenticationToken convert(@NonNull Jwt jwt) {
         
@@ -34,8 +38,8 @@ public class JwtAuthConverter implements Converter <Jwt , AbstractAuthentication
             }
             private String getPrincipleClaimName(Jwt jwt) {
                 String claimName = JwtClaimNames.SUB ; 
-                if ( princileAttribut != null){
-                    claimName = princileAttribut ; 
+                if ( principalAttribute != null){
+                    claimName = principalAttribute ; 
                 }
                return jwt.getClaim(claimName) ; 
             }
@@ -51,10 +55,10 @@ public class JwtAuthConverter implements Converter <Jwt , AbstractAuthentication
         if (resourceAccess.get("ai-product-rest-api")== null ){
             return Set.of(); 
         }
-        resource = (Map<String, Object>) resourceAccess.get("ai-product-rest-api") ; 
+        resource = (Map<String, Object>) resourceAccess.get(resourceId) ; 
 
         resourceRoles = (Collection<String>) resource.get("roles");
-        return resourceRoles.stream().map(role -> new SimpleGrantedAuthority(role:"ROLE_" + role).collect(Collectors.toSet()) ; 
+        return resourceRoles.stream().map(role -> new SimpleGrantedAuthority("ROLE_" + role)).collect(Collectors.toSet()) ; 
     }
 
 }
